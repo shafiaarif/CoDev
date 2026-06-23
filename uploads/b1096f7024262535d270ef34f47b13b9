@@ -1,0 +1,147 @@
+# class Student:
+#     def __init__(self):
+#         self.name = ""
+#         self.roll_number = ""
+#         self.email_address = ""
+#         self.courses = []
+#         self.sum_of_gps = 0
+#         self.sum_of_ch = 0
+#
+#     # Instance method to input student details
+#     def input_student_details(self):
+#         self.name = input("Enter your name: ")
+#         self.roll_number = input("Enter your roll number: ")
+#         self.email_address = input("Enter your email address: ")
+#
+#     # Instance method to input course details
+#     def input_courses(self):
+#         count_of_courses = int(input("Enter the number of courses: "))
+#         for i in range(count_of_courses):
+#             course = {}
+#             course['name'] = input(f"Enter the name of course {i + 1}: ")
+#             course['credit_hours'] = float(input(f"Enter the credit hours of {course['name']}: "))
+#             course['grade_points'] = float(input(f"Enter the grade points of {course['name']}: "))
+#             self.courses.append(course)
+#             self.sum_of_gps += course['grade_points']
+#             self.sum_of_ch += course['credit_hours']
+#
+#     # Instance method to calculate GPA for each course
+#     def calculate_gpa(self):
+#         for course in self.courses:
+#             gpa = course['grade_points'] / course['credit_hours']
+#             print(f"The GPA of {course['name']} is {round(gpa, 2)}")
+#
+#     # Instance method to calculate CGPA
+#     def calculate_cgpa(self):
+#         if self.sum_of_ch == 0:
+#             print("No credit hours found. Please input course data first.")
+#             return
+#         cgpa = self.sum_of_gps / self.sum_of_ch
+#         print(f"The CGPA of {self.name} for this semester is {round(cgpa, 2)}")
+#
+# # Example of how to use the class
+# student = Student()
+# student.input_student_details()
+# student.input_courses()
+# student.calculate_gpa()
+# student.calculate_cgpa()
+#
+#
+# # class Person:
+# #     def __init__(self, birth_year,current_year):
+# #         self.birth_year = birth_year
+# #         self.current_year = current_year
+# #
+# #     @classmethod
+# #     def calculate_age(cls,birth_year,current_year):
+# #         age = current_year - birth_year
+#         return age
+#
+#     @staticmethod
+#     def check_age(age):
+#         return age > 18
+#
+#
+# birth_year = int(input("Enter your Birth Year: "))
+# current_year = int(input("Enter Current Year: "))
+#
+# person = Person(birth_year,current_year)
+# age = person.calculate_age(birth_year,current_year)
+# print(f"Age: {age}")
+#
+class student:
+    def input_std_info(self):
+        self.name = input('Enter name of the student : ')
+        self.roll_number = input('Enter Roll no. of the student : ')
+        self.email_address = input('Enter email_address of the student : ')
+
+    def courses(self):
+        self.no_of_courses = int(input('Enter no. of courses : '))
+        self.courses_credit_hrs_dict = {}
+        for i in range(self.no_of_courses):
+            course_name = input('Enter name of the course : ')
+            credit_hr_of_course = int(input('Enter credit hour of the course : '))
+            self.courses_credit_hrs_dict[course_name] = credit_hr_of_course
+
+
+    def calculate_gpa(self):
+        self.courses_gpa_dict = {}
+        self.sum_of_credit_hrs = 0
+        for j in self.courses_credit_hrs_dict:
+            self.sum_of_credit_hrs += self.courses_credit_hrs_dict[j]
+            course_marks = int(input(f'Enter marks of {j} : '))
+            if 85 <= course_marks <= 100:
+                self.courses_gpa_dict[j] = 4.0
+
+            if 80 <= course_marks <= 84:
+                self.courses_gpa_dict[j] = 3.7
+
+            if 75 <= course_marks <= 79:
+                self.courses_gpa_dict[j] = 3.4
+
+            if 70 <= course_marks <= 74:
+                self.courses_gpa_dict[j] = 3.0
+
+        print('The GPA of the courses are as follows : ')
+        for k in self.courses_gpa_dict:
+            print(f'GPA of {k} is',self.courses_gpa_dict[k])
+
+    def calculate_cgpa(self):
+        numerator_terms = []
+        for l in self.courses_gpa_dict:
+            prod = self.courses_gpa_dict[l] * self.courses_credit_hrs_dict[l]
+            numerator_terms.append(prod)
+
+        numerator = sum(numerator_terms)
+        CGPA = numerator/self.sum_of_credit_hrs
+        print(f'The CGPA of {self.name} is',CGPA)
+
+
+    @classmethod
+    def pass_check(cls):
+        passed = input('If student is passed press P : ')
+        if passed.upper() == 'P':
+            print('Congratulations!!!')
+        else:
+            print('You have to concentrate on your studies. Best of Luck.')
+
+    @staticmethod
+    def no_of_student(Batch):
+        if Batch == 'First Year':
+            no_of_students = 50
+        elif Batch == 'Second Year':
+            no_of_students = 75
+        elif Batch == 'Third Year':
+            no_of_students = 110
+        elif Batch == 'Fourth Year':
+            no_of_students = 120
+        return no_of_students
+
+w = student()
+w.input_std_info()
+w.courses()
+w.calculate_gpa()
+w.calculate_cgpa()
+w.pass_check()
+print(w.no_of_student("First year"))
+

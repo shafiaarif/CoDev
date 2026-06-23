@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DEVROOM | Student Dashboard</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+  --primary:#1a1a2e;--secondary:#16213e;--accent:#0f3460;--highlight:#e94560;--text:#ffffff;
+}
+*{margin:0;padding:0;box-sizing:border-box;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;}
+body{background:linear-gradient(135deg,var(--primary)0%,var(--secondary)100%);min-height:100vh;color:var(--text);}
+.header{display:flex;justify-content:space-between;align-items:center;padding:1rem 2rem;background:rgba(26,37,48,0.9);border-bottom:2px solid var(--highlight);}
+.role-badge{background:var(--accent);padding:0.5rem 1rem;border-radius:20px;font-weight:600;}
+.welcome-text h1{font-size:1.8rem;margin-bottom:0.3rem;}
+.logout-btn{background:transparent;color:var(--text);border:2px solid var(--highlight);padding:0.5rem 1rem;border-radius:6px;cursor:pointer;transition:all 0.3s;}
+.logout-btn:hover{background:var(--highlight);}
+.container{max-width:1200px;margin:2rem auto;padding:0 1rem;}
+.nav-buttons{display:flex;gap:1rem;margin-bottom:2rem;justify-content:center;flex-wrap:wrap;}
+.nav-btn{background:rgba(255,255,255,0.1);color:var(--text);border:1px solid var(--accent);padding:1rem 1.5rem;border-radius:8px;cursor:pointer;transition:all 0.3s;}
+.nav-btn.active{background:var(--highlight);border-color:var(--highlight);}
+.nav-btn:hover{transform:translateY(-2px);}
+.content-section{background:rgba(255,255,255,0.1);padding:2rem;border-radius:10px;border:1px solid var(--accent);display:none;}
+.content-section.active{display:block;}
+h2{margin-bottom:1.5rem;color:var(--highlight);}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:2rem;}
+.stat-card{background:rgba(15,52,96,0.3);padding:1.5rem;border-radius:8px;text-align:center;border-left:4px solid var(--highlight);}
+.stat-number{font-size:2rem;font-weight:700;color:var(--highlight);}
+.input-group{margin-bottom:1.2rem;}
+label{display:block;margin-bottom:0.5rem;font-weight:500;}
+input,select{width:100%;padding:0.8rem;border:1px solid var(--accent);border-radius:6px;background:rgba(255,255,255,0.1);color:white;}
+.file-upload{border:2px dashed var(--accent);padding:1.5rem;text-align:center;border-radius:8px;cursor:pointer;transition:all 0.3s;margin-top:1rem;}
+.file-upload:hover{border-color:var(--highlight);background:rgba(233,69,96,0.1);}
+.file-upload i{font-size:2rem;margin-bottom:0.5rem;color:var(--highlight);}
+#fileInput,#sessionFileInput,#assignmentFileInput{display:none;}
+.file-info{margin-top:0.5rem;font-size:0.9rem;color:rgba(255,255,255,0.8);}
+.submit-btn{width:100%;padding:0.8rem;border:none;border-radius:6px;background:var(--highlight);color:white;font-weight:600;cursor:pointer;transition:all 0.3s;margin-top:1rem;}
+.submit-btn:hover{transform:translateY(-2px);}
+.join-method{display:flex;gap:1rem;margin:1rem 0;}
+.method-option{flex:1;text-align:center;padding:1rem;background:rgba(255,255,255,0.1);border-radius:6px;cursor:pointer;border:1px solid transparent;}
+.method-option.selected{border-color:var(--highlight);background:rgba(233,69,96,0.2);}
+.session-created-modal{display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:1000;justify-content:center;align-items:center;}
+.session-created-content{background:var(--primary);padding:2rem;border-radius:10px;border:2px solid var(--highlight);max-width:500px;width:90%;text-align:center;}
+.session-code{font-size:2.5rem;font-weight:bold;color:var(--highlight);margin:1rem 0;letter-spacing:5px;}
+.session-link{background:rgba(255,255,255,0.1);padding:1rem;border-radius:6px;margin:1rem 0;word-break:break-all;font-size:0.9rem;}
+.copy-btn,.back-btn{border:none;padding:0.5rem 1rem;border-radius:4px;cursor:pointer;margin:0.5rem;}
+.copy-btn{background:var(--accent);color:white;}
+.copy-btn:hover{background:var(--highlight);}
+.back-btn{background:rgba(255,255,255,0.1);color:white;border:1px solid var(--accent);}
+.back-btn:hover{background:var(--accent);}
+.assignments-list{margin-top:2rem;}
+.assignment-card{background:rgba(255,255,255,0.05);padding:1.5rem;border-radius:8px;margin-bottom:1rem;border-left:4px solid var(--accent);}
+.assignment-title{font-size:1.2rem;font-weight:600;margin-bottom:0.5rem;color:var(--highlight);}
+.assignment-due{color:rgba(255,255,255,0.7);font-size:0.9rem;margin-bottom:1rem;}
+.assignment-actions{display:flex;gap:0.5rem;flex-wrap:wrap;}
+.action-btn{background:rgba(255,255,255,0.1);color:var(--text);border:1px solid var(--accent);padding:0.5rem 1rem;border-radius:4px;cursor:pointer;font-size:0.8rem;transition:all 0.3s;}
+.action-btn:hover{background:var(--accent);}
+.action-btn.primary{background:var(--highlight);border-color:var(--highlight);}
+.action-btn.primary:hover{background:#d43c55;}
+@media(max-width:768px){.header{flex-direction:column;gap:1rem;text-align:center;}.nav-buttons{flex-direction:column;}.join-method{flex-direction:column;}.assignment-actions{flex-direction:column;}.session-created-content{padding:1rem;}.session-code{font-size:2rem;}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="role-badge">STUDENT</div>
+  <div class="welcome-text">
+    <h1 id="welcomeMessage">Welcome, Student!</h1>
+    <div>Learn, Code, Collaborate</div>
+  </div>
+  <button class="logout-btn" onclick="logout()">Logout</button>
+</div>
+
+<div class="container">
+  <div class="nav-buttons">
+    <button class="nav-btn active" onclick="showSection('dashboard')">Dashboard</button>
+    <button class="nav-btn" onclick="showSection('join')">Join Session</button>
+    <button class="nav-btn" onclick="showSection('create')">Create Session</button>
+    <button class="nav-btn" onclick="showSection('assignments')">My Assignments</button>
+  </div>
+
+  <!-- Dashboard -->
+
+  <div id="dashboard" class="content-section active">
+    <h2>Dashboard Overview</h2>
+    <div class="stats">
+      <div class="stat-card"><div class="stat-number" id="activeSessions">0</div><div>Active Sessions</div></div>
+      <div class="stat-card"><div class="stat-number" id="peersOnline">0</div><div>Peers Online</div></div>
+      <div class="stat-card"><div class="stat-number" id="yourSessions">0</div><div>Your Sessions</div></div>
+      <div class="stat-card"><div class="stat-number" id="pendingAssignments">0</div><div>Pending Assignments</div></div>
+    </div>
+  </div>
+
+  <!-- Join Session -->
+
+  <div id="join" class="content-section">
+    <h2>Join Coding Session</h2>
+    <div class="join-method">
+      <div class="method-option selected" onclick="selectMethod('link')">Via Link</div>
+      <div class="method-option" onclick="selectMethod('code')">Via Code</div>
+    </div>
+    <div id="linkMethod">
+      <div class="input-group">
+        <label>Session Link</label>
+        <input type="text" id="sessionLink" placeholder="https://devroom.com/session/abc123">
+      </div>
+      <button class="submit-btn" onclick="joinSession()">Join Session</button>
+    </div>
+    <div id="codeMethod" style="display:none;">
+      <div class="input-group">
+        <label>Session Code</label>
+        <input type="text" id="sessionCode" placeholder="Enter session code">
+      </div>
+      <button class="submit-btn" onclick="joinSession()">Join Session</button>
+    </div>
+  </div>
+
+  <!-- Create Session -->
+
+  <div id="create" class="content-section">
+    <h2>Create Coding Session</h2>
+    <div class="input-group">
+      <label>Session Title</label>
+      <input type="text" id="sessionTitle" placeholder="Session Name">
+    </div>
+    <div class="file-upload" onclick="document.getElementById('sessionFileInput').click()">
+      <i class="fa fa-upload"></i>
+      <div>Upload Starter Code</div>
+      <input type="file" id="sessionFileInput" onchange="showFileName('sessionFileInput', 'sessionFileName')">
+      <div class="file-info" id="sessionFileName">No file chosen</div>
+    </div>
+    <button class="submit-btn" onclick="createSession()">Create Session</button>
+  </div>
+
+  <!-- Assignments -->
+
+  <div id="assignments" class="content-section">
+    <h2>My Assignments</h2>
+    <div class="assignments-list" id="assignmentsList">
+      <!-- Dynamically added assignment cards -->
+    </div>
+  </div>
+</div>
+
+<!-- Session Created Modal -->
+
+<div class="session-created-modal" id="sessionModal">
+  <div class="session-created-content">
+    <h3>Session Created!</h3>
+    <div class="session-code" id="newSessionCode">ABC123</div>
+    <div class="session-link" id="newSessionLink">https://devroom.com/session/ABC123</div>
+    <button class="copy-btn" onclick="copySessionLink()">Copy Link</button>
+    <button class="back-btn" onclick="closeModal()">Back</button>
+  </div>
+</div>
+
+<script>
+function showSection(sectionId){
+  document.querySelectorAll('.content-section').forEach(sec=>sec.classList.remove('active'));
+  document.getElementById(sectionId).classList.add('active');
+  document.querySelectorAll('.nav-btn').forEach(btn=>btn.classList.remove('active'));
+  document.querySelector('.nav-buttons button[onclick*="'+sectionId+'"]').classList.add('active');
+}
+
+function selectMethod(method){
+  document.getElementById('linkMethod').style.display=method==='link'?'block':'none';
+  document.getElementById('codeMethod').style.display=method==='code'?'block':'none';
+  document.querySelectorAll('.method-option').forEach(opt=>opt.classList.remove('selected'));
+  document.querySelector('.method-option[onclick*="'+method+'"]').classList.add('selected');
+}
+
+function showFileName(inputId, infoId){
+  const fileInput=document.getElementById(inputId);
+  const info=document.getElementById(infoId);
+  info.textContent=fileInput.files.length>0?fileInput.files[0].name:'No file chosen';
+}
+
+function joinSession(){ alert('Joining session...'); }
+function createSession(){
+  document.getElementById('sessionModal').style.display='flex';
+}
+function copySessionLink(){
+  const link=document.getElementById('newSessionLink').textContent;
+  navigator.clipboard.writeText(link);
+  alert('Link copied!');
+}
+function closeModal(){document.getElementById('sessionModal').style.display='none';}
+function logout(){alert('Logging out...');}
+</script>
+
+</body>
+</html>

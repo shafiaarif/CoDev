@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DEVROOM | Login</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #1a1a2e;
+      --secondary: #16213e;
+      --accent: #0f3460;
+      --highlight: #e94560;
+      --text: #ffffff;
+    }
+    
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: var(--text);
+    }
+
+    .form-container {
+      background: rgba(255, 255, 255, 0.1);
+      padding: 2.5rem;
+      border-radius: 15px;
+      backdrop-filter: blur(10px);
+      border: 2px solid var(--highlight);
+      width: 400px;
+      max-width: 90%;
+    }
+
+    .logo {
+      text-align: center;
+      font-size: 2.5rem;
+      margin-bottom: 0.5rem;
+      color: var(--highlight);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      font-weight: 600;
+    }
+
+    .input-group {
+      margin-bottom: 1.2rem;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 500;
+    }
+
+    input, select {
+      width: 100%;
+      padding: 0.8rem;
+      border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 6px;
+      background: rgba(255,255,255,0.1);
+      color: white;
+      font-size: 1rem;
+    }
+
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--highlight);
+    }
+
+    .role-options {
+      display: flex;
+      gap: 0.8rem;
+      margin-top: 0.5rem;
+    }
+
+    .role-option {
+      flex: 1;
+      text-align: center;
+      padding: 0.8rem;
+      background: rgba(255,255,255,0.1);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      border: 1px solid transparent;
+    }
+
+    .role-option.selected {
+      background: rgba(233, 69, 96, 0.2);
+      border-color: var(--highlight);
+    }
+
+    .submit-btn {
+      width: 100%;
+      padding: 0.8rem;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      background: var(--highlight);
+      color: white;
+      margin-top: 1rem;
+      transition: all 0.3s;
+    }
+
+    .submit-btn:hover {
+      transform: translateY(-2px);
+    }
+
+    .form-links {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1rem;
+    }
+
+    .link {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-size: 0.9rem;
+      transition: all 0.3s;
+    }
+
+    .link:hover {
+      color: white;
+    }
+
+    @media (max-width: 500px) {
+      .form-container {
+        padding: 2rem;
+      }
+      
+      .role-options {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="form-container">
+    <div class="logo">
+      <i class="fas fa-laptop-code"></i>
+    </div>
+    
+    <h2>Welcome Back</h2>
+    
+    <form id="loginForm">
+      <div class="input-group">
+        <label>Email</label>
+        <input type="email" id="email" placeholder="Enter your email" required>
+      </div>
+
+      <div class="input-group">
+        <label>Password</label>
+        <input type="password" id="password" placeholder="Enter your password" required>
+      </div>
+
+      <div class="input-group">
+        <label>Login as...</label>
+        <div class="role-options">
+          <div class="role-option" onclick="selectRole('student')">Student</div>
+          <div class="role-option" onclick="selectRole('instructor')">Instructor</div>
+          <div class="role-option" onclick="selectRole('admin')">Admin</div>
+        </div>
+        <input type="hidden" id="role" required>
+      </div>
+
+      <button type="submit" class="submit-btn">
+        Sign In
+      </button>
+    </form>
+
+    <div class="form-links">
+      <a href="index.html" class="link">Back to Home</a>
+      <a href="register.html" class="link">Create Account</a>
+    </div>
+  </div>
+
+<script>
+  function selectRole(role) {
+    document.getElementById('role').value = role;
+    document.querySelectorAll('.role-option').forEach(opt => {
+      opt.classList.remove('selected');
+    });
+    event.target.classList.add('selected');
+  }
+
+  document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+    const role = document.getElementById('role').value;
+    const btn = this.querySelector('.submit-btn');
+
+    if (!email || !password || !role) {
+      alert('Please fill all fields and select role');
+      return;
+    }
+
+    btn.innerHTML = 'Signing In...';
+    btn.disabled = true;
+
+    try {
+      const response = await fetch('http://localhost:8000/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password, role })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // SUCCESS
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('username', data.user.username);
+      localStorage.setItem('userRole', data.user.role);
+
+      alert(`Welcome back, ${data.user.username}!`);
+
+      if (data.user.role === 'instructor') {
+        window.location.href = 'instructor_dashboard.html';
+      } else if (data.user.role === 'admin') {
+        window.location.href = 'admin_dashboard.html';
+      } else {
+        window.location.href = 'student_dashboard.html';
+      }
+
+    } catch (err) {
+      alert('Login Failed: ' + err.message);
+      console.error(err);
+    } finally {
+      btn.innerHTML = 'Sign In';
+      btn.disabled = false;
+    }
+  });
+
+  // Auto redirect if already logged in
+  window.addEventListener('load', () => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      const role = localStorage.getItem('userRole');
+      if (role === 'instructor') location.href = 'instructor_dashboard.html';
+      else if (role === 'admin') location.href = 'admin_dashboard.html';
+      else if (role === 'student') location.href = 'student_dashboard.html';
+    }
+  });
+</script>
+</body>
+</html>

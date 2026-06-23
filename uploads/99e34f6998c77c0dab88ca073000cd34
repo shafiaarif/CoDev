@@ -1,0 +1,146 @@
+import subprocess, platform, time, json, hashlib, os
+from pathlib import Path
+import requests
+from datetime import datetime
+
+# config file in same folder
+CFG_FILE = "config.json"
+LOG_PATH = "agent.log"
+
+def get_wifi_ip():
+    try:
+        out = subprocess.check_output("ipconfig", shell=True, text=True, errors="ignore")
+
+        in_wifi_block = False
+        wifi_ip = None
+
+        for line in out.splitlines():
+            line = line.strip()
+
+            # Wi-Fi section
+            if "Wireless LAN adapter Wi-Fi" in line or "Wireless LAN adapter WLAN" in line:
+                in_wifi_block = True
+                continue
+
+            # new adapter block begins → stop
+            if in_wifi_block and line.endswith(":") and "adapter" in line.lower():
+                in_wifi_block = False
+
+            # find IPv4 inside Wi-Fi block
+            if in_wifi_block and "IPv4 Address" in line:
+                parts = line.split(":")
+                if len(parts) > 1:
+                    candidate = parts[1].strip()
+
+                    if candidate.count(".") == 3:
+                        wifi_ip = candidate
+                        break
+
+        return wifi_ip
+    except:
+        return None
+
+def load_cfg():
+    cfg = {}
+    if Path(CFG_FILE).exists():
+        cfg = json.loads(Path(CFG_FILE).read_text())
+    else:
+        raise SystemExit(f"Missing {CFG_FILE}. Create it with collector_url, device_id, device_token, interval_seconds")
+    return cfg
+
+def read_arp_windows():
+    """Parse arp -a output into dict ip -> {mac, type}"""
+    arp = {}
+    # use shell=True to allow arp -a on Windows
+    out = subprocess.check_output("arp -a", shell=True, text=True, errors="ignore")
+    for line in out.splitlines():
+        line = line.strip()
+        # skip header/blank lines
+        if not line or line.startswith("Interface") or line.startswith("Internet Address"):
+            continue
+        parts = line.split()
+        # Expected lines: 192.168.43.1      00-11-22-33-44-55     dynamic
+        if len(parts) >= 3 and parts[0][0].isdigit():
+            ip = parts[0]
+            mac = parts[1].lower().replace('-', ':')
+            state = parts[2] if len(parts) >= 3 else "unknown"
+            arp[ip] = {"mac": mac, "state": state}
+    return arp
+
+def compute_diff(prev, cur):
+    diff = {"added": {}, "removed": {}, "changed": {}}
+    for ip in cur:
+        if ip not in prev:
+            diff["added"][ip] = cur[ip]
+        else:
+            if cur[ip].get("mac") != prev[ip].get("mac"):
+                diff["changed"][ip] = {"old": prev[ip].get("mac"), "new": cur[ip].get("mac")}
+    for ip in prev:
+        if ip not in cur:
+            diff["removed"][ip] = prev[ip]
+    return diff
+
+def send_report(url, device_id, token, payload, verify_tls=True):
+    headers = {
+        "Content-Type": "application/json",
+        "X-Device-Id": device_id,
+        "X-Device-Token": token
+    }
+    try:
+        r = requests.post(url, json=payload, headers=headers, timeout=6, verify=verify_tls)
+        return r.status_code, r.text
+    except Exception as e:
+        return None, str(e)
+
+def log(msg):
+    ts = datetime.now().isoformat()
+    line = f"{ts} {msg}\n"
+    print(line, end="")
+    with open(LOG_PATH, "a") as f:
+        f.write(line)
+
+def main():
+    cfg = load_cfg()
+    collector_url = cfg["collector_url"]
+    device_id = cfg["device_id"]
+    device_token = cfg["device_token"]
+    interval = int(cfg.get("interval_seconds", 5))
+    verify_tls = bool(cfg.get("verify_tls", True))
+
+    prev = {}
+    # load last snapshot if exists
+    snapshot_file = f"{device_id}_last.json"
+    if Path(snapshot_file).exists():
+        try:
+            prev = json.loads(Path(snapshot_file).read_text())
+        except Exception:
+            prev = {}
+
+    log(f"Starting ARP agent for device {device_id}, reporting to {collector_url} every {interval}s")
+
+    while True:
+        try:
+            cur = read_arp_windows()
+            diff = compute_diff(prev, cur)
+            fingerprint = hashlib.sha256(json.dumps(cur, sort_keys=True).encode()).hexdigest()
+            my_ip = get_wifi_ip()
+
+            payload = {
+                "device_id": device_id,
+                "timestamp": int(time.time()),
+                "full": cur,
+                "diff": diff,
+                "fingerprint": fingerprint,
+                "my_ip": my_ip
+            }
+            status, resp = send_report(collector_url, device_id, device_token, payload, verify_tls=verify_tls)
+            log(f"Report sent status={status} resp={str(resp)[:200]}")
+            # persist last snapshot
+            Path(snapshot_file).write_text(json.dumps(cur, indent=2))
+            prev = cur
+        except Exception as e:
+            log(f"Error during run: {e}")
+        time.sleep(interval)
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DEVROOM | Instructor Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #1a1a2e;
+      --secondary: #16213e;
+      --accent: #0f3460;
+      --highlight: #e94560;
+      --text: #ffffff;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; font-family:'Segoe UI',sans-serif; }
+    body { background: linear-gradient(135deg,var(--primary),var(--secondary)); min-height:100vh; color:var(--text); }
+
+    .header { padding:1rem 2rem; background:rgba(26,37,48,0.9); border-bottom:3px solid var(--highlight); display:flex; justify-content:space-between; align-items:center; }
+    .role-badge { background:var(--highlight); padding:0.5rem 1rem; border-radius:20px; font-weight:600; }
+    .welcome-text h1 { font-size:1.8rem; }
+    .logout-btn { background:transparent; color:white; border:2px solid var(--highlight); padding:0.5rem 1rem; border-radius:6px; cursor:pointer; transition:0.3s; }
+    .logout-btn:hover { background:var(--highlight); }
+
+    .container { max-width:1200px; margin:2rem auto; padding:0 1rem; }
+    .nav-buttons { display:flex; gap:1rem; margin-bottom:2rem; justify-content:center; flex-wrap:wrap; }
+    .nav-btn { background:rgba(255,255,255,0.1); color:white; border:1px solid var(--accent); padding:1rem 1.5rem; border-radius:8px; cursor:pointer; transition:0.3s; }
+    .nav-btn.active, .nav-btn:hover { background:var(--highlight); }
+
+    .content-section { background:rgba(255,255,255,0.1); padding:2.5rem; border-radius:15px; border:1px solid var(--accent); display:none; }
+    .content-section.active { display:block; }
+
+    h2 { color:var(--highlight); margin-bottom:1.5rem; text-align:center; font-size:2rem; }
+
+    .input-group { margin-bottom:1.3rem; }
+    label { display:block; margin-bottom:0.6rem; font-weight:500; color:#ccc; }
+    input, select {
+      width:100%; padding:0.9rem; background:rgba(255,255,255,0.08); border:1px solid var(--accent); border-radius:12px; color:white; font-size:1rem;
+    }
+    input:focus, select:focus { outline:none; border-color:var(--highlight); box-shadow:0 0 15px rgba(233,69,96,0.3); }
+
+    .submit-btn { width:100%; padding:1rem; background:var(--highlight); border:none; border-radius:12px; color:white; font-weight:600; font-size:1.1rem; cursor:pointer; margin-top:2rem; transition:0.3s; }
+    .submit-btn:hover { transform:translateY(-4px); box-shadow:0 15px 30px rgba(233,69,96,0.4); }
+
+    /* BEAUTIFUL INVITE SECTION */
+    .invite-section {
+      margin-top:2.5rem; padding:2rem; background:rgba(255,255,255,0.05); border-radius:15px; border:2px dashed var(--accent);
+    }
+    .invite-header {
+      display:flex; justify-content:space-between; align-items:center; margin-bottom:1.2rem;
+    }
+    .invite-header h3 { color:var(--highlight); margin:0; }
+    #selectedCount { background:var(--highlight); padding:0.5rem 1rem; border-radius:30px; font-weight:bold; }
+
+    #searchStudents {
+      width:100%; padding:1rem; margin-bottom:1.2rem; border-radius:12px; background:rgba(255,255,255,0.1); border:1px solid var(--accent); color:white;
+    }
+    .select-all-btns {
+      display:flex; gap:1rem; margin-bottom:1.5rem;
+    }
+    .select-all-btns button {
+      flex:1; padding:0.7rem; background:rgba(255,255,255,0.1); border:1px solid var(--accent); border-radius:10px; color:white; cursor:pointer;
+    }
+
+    .student-card {
+      display:flex; align-items:center; padding:1rem; background:rgba(255,255,255,0.05); margin:0.7rem 0; border-radius:12px; cursor:pointer; transition:0.3s; border:2px solid transparent;
+    }
+    .student-card:hover { border-color:var(--highlight); transform:translateX(5px); }
+    .student-card input { transform:scale(1.4); margin-right:1.2rem; accent-color:var(--highlight); }
+    .avatar {
+      width:45px; height:45px; border-radius:50%; display:flex; align-items:center; justify-content:center; color:white; font-weight:bold; font-size:1.2rem; margin-right:1rem;
+    }
+
+    /* MODAL */
+    .modal {
+      display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.92); backdrop-filter:blur(12px); justify-content:center; align-items:center; z-index:9999;
+    }
+    .modal-content {
+      background:var(--secondary); padding:3rem 2rem; border-radius:25px; border:3px solid var(--highlight); width:90%; max-width:650px; text-align:center; box-shadow:0 0 60px rgba(233,69,96,0.5);
+    }
+    .session-code { font-size:5rem; font-weight:bold; color:var(--highlight); letter-spacing:1.5rem; margin:1.5rem 0; text-shadow:0 0 30px rgba(233,69,96,0.6); }
+    .copy-btn { background:rgba(255,255,255,0.15); border:none; color:white; padding:0.7rem 1.4rem; margin:0.6rem; border-radius:10px; cursor:pointer; font-size:1rem; }
+    .copy-btn:hover { background:var(--highlight); transform:scale(1.08); }
+    .join-now-btn { background:var(--highlight); color:white; border:none; padding:1.3rem; font-size:1.4rem; font-weight:bold; border-radius:15px; cursor:pointer; margin-top:2.5rem; width:100%; box-shadow:0 10px 30px rgba(233,69,96,0.4); }
+    .join-now-btn:hover { transform:scale(1.05); }
+
+    #toast {
+      position:fixed; bottom:40px; left:50%; transform:translateX(-50%); background:var(--highlight); color:white; padding:1.2rem 2.5rem; border-radius:50px; font-weight:bold; z-index:10000; opacity:0; transition:opacity 0.4s;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <div class="role-badge">INSTRUCTOR</div>
+    <div class="welcome-text">
+      <h1>Welcome, <span id="welcomeName">Instructor</span>!</h1>
+    </div>
+    <button class="logout-btn" onclick="logout()">Logout</button>
+  </div>
+
+  <div class="container">
+    <div class="nav-buttons">
+      <button class="nav-btn active" onclick="showSection('dashboard')">Dashboard</button>
+      <button class="nav-btn" onclick="showSection('create')">Create Session</button>
+      <button class="nav-btn" onclick="showSection('join')">Join Session</button>
+      <button class="nav-btn" onclick="showSection('sessions')">My Sessions</button>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="dashboard" class="content-section active">
+      <h2>Instructor Dashboard</h2>
+      <p style="text-align:center; font-size:1.1rem; opacity:0.9;">Create real-time coding sessions and invite your students instantly!</p>
+    </div>
+
+    <!-- CREATE SESSION + PREMIUM INVITE UI -->
+    <div id="create" class="content-section">
+      <h2>Create New Session</h2>
+
+      <div class="input-group">
+        <label>Session Title</label>
+        <input type="text" id="sessionTitle" placeholder="e.g. Live DSA Practice with Arrays">
+      </div>
+      <div class="input-group">
+        <label>Duration (minutes)</label>
+        <input type="number" id="sessionLength" value="60" min="15" max="300">
+      </div>
+      <div class="input-group">
+        <label>Session Type</label>
+        <select id="sessionType">
+          <option value="public">Public – Anyone with link can join</option>
+          <option value="private">Private – Only invited students + passcode</option>
+        </select>
+      </div>
+
+      <!-- BEAUTIFUL INVITE STUDENTS -->
+      <div class="invite-section">
+        <div class="invite-header">
+          <h3><i class="fas fa-user-plus"></i> Invite Students</h3>
+          <span id="selectedCount">0 selected</span>
+        </div>
+
+        <input type="text" id="searchStudents" placeholder="🔍 Search by name or email...">
+
+        <div class="select-all-btns">
+          <button onclick="selectAllStudents()">Select All</button>
+          <button onclick="deselectAllStudents()">Clear Selection</button>
+        </div>
+
+        <div id="studentsList" style="max-height:320px; overflow-y:auto;">
+          <p style="text-align:center; opacity:0.7;">Loading students...</p>
+        </div>
+      </div>
+
+      <button class="submit-btn" onclick="createSessionWithInvite()">
+        <i class="fas fa-paper-plane"></i> Create Session & Send Invites
+      </button>
+    </div>
+
+    <!-- JOIN SESSION TAB -->
+    <div id="join" class="content-section">
+      <h2>Join Existing Session</h2>
+
+      <div style="display:flex; gap:1rem; margin-bottom:2rem; flex-wrap:wrap; justify-content:center;">
+        <div class="method-option selected" onclick="selectJoinMethod('link')">Via Link</div>
+        <div class="method-option" onclick="selectJoinMethod('code')">Via Code</div>
+      </div>
+
+      <div id="linkMethod">
+        <div class="input-group">
+          <label>Session Link</label>
+          <input type="text" id="joinLink" placeholder="e.g. http://localhost:5500/join/ABCD1234">
+        </div>
+      </div>
+
+      <div id="codeMethod" style="display:none;">
+        <div class="input-group">
+          <label>Room Code</label>
+          <input type="text" id="roomCode" placeholder="ABCD1234" style="text-transform:uppercase; letter-spacing:0.5rem; font-size:1.5rem; text-align:center;">
+        </div>
+      </div>
+
+      <div class="input-group passcode-input" id="passcodeInput" style="display:none;">
+        <label>Passcode (Required for Private Sessions)</label>
+        <input type="text" id="inputPasscode" placeholder="Enter 6-digit passcode">
+      </div>
+
+      <button class="submit-btn" onclick="joinSession()">
+        <i class="fas fa-sign-in-alt"></i> Join Session
+      </button>
+    </div>
+
+    <!-- MY SESSIONS TAB -->
+    <div id="sessions" class="content-section">
+      <h2>My Sessions</h2>
+      <div id="sessionsList">Loading...</div>
+    </div>
+
+  </div>
+
+  <!-- SUCCESS MODAL -->
+  <div class="modal" id="sessionModal">
+    <div class="modal-content">
+      <h2>Session Created Successfully!</h2>
+      <div class="session-code" id="modalCode"></div>
+
+      <p><strong>Join Link:</strong></p>
+      <div id="modalLink" style="background:rgba(255,255,255,0.1); padding:1.2rem; border-radius:12px; margin:1.2rem 0; font-size:1.1rem; word-break:break-all;"></div>
+      <button class="copy-btn" onclick="copyToClipboard('modalLink')"><i class="fas fa-copy"></i> Copy Link</button>
+
+      <div id="passcodeSection" style="display:none; margin:2rem 0;">
+        <p><strong>Private Passcode:</strong></p>
+        <div id="modalPasscode" style="font-size:4rem; color:var(--highlight); letter-spacing:1rem;"></div>
+        <button class="copy-btn" onclick="copyToClipboard('modalPasscode')"><i class="fas fa-copy"></i> Copy Passcode</button>
+      </div>
+
+      <button class="join-now-btn" id="joinNowBtn">
+        <i class="fas fa-play-circle"></i> Join Session Now
+      </button>
+    </div>
+  </div>
+
+  <div id="toast">Copied to clipboard!</div>
+
+  <script>
+    const token = localStorage.getItem('token');
+    if (!token) {
+      alert('Please login first!');
+      window.location.href = 'login.html';
+    }
+
+    let currentUser = null;
+    let students = [];
+    let currentRoomId = null;
+
+    async function loadUserAndStudents() {
+      try {
+        const res = await fetch('http://localhost:8000/api/auth/me', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error();
+        currentUser = data.user;
+        document.getElementById('welcomeName').textContent = currentUser.username;
+
+        const usersRes = await fetch('http://localhost:8000/api/rooms/users', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const usersData = await usersRes.json();
+        students = usersData.users.filter(u => u.role === 'student');
+
+        renderStudents(students);
+
+        document.getElementById('searchStudents').addEventListener('input', (e) => {
+          const term = e.target.value.toLowerCase();
+          const filtered = students.filter(s => s.username.toLowerCase().includes(term) || s.email.toLowerCase().includes(term));
+          renderStudents(filtered);
+        });
+
+      } catch (err) {
+        document.getElementById('studentsList').innerHTML = '<p style="color:#e94560;">Failed to load students</p>';
+      }
+    }
+
+    function renderStudents(list) {
+      const container = document.getElementById('studentsList');
+      if (list.length === 0) {
+        container.innerHTML = '<p style="text-align:center; opacity:0.7; padding:2rem;">No students found</p>';
+        return;
+      }
+
+      const colors = ['#e94560', '#ff6b6b', '#0f3460', '#16213e', '#7209b7', '#f72585', '#06d6a0'];
+      container.innerHTML = list.map((s, i) => {
+        const color = colors[i % colors.length];
+        return `
+          <label class="student-card">
+            <input type="checkbox" value="${s._id}">
+            <div class="avatar" style="background:${color}">${s.username[0].toUpperCase()}</div>
+            <div>
+              <div style="font-weight:600;">${s.username}</div>
+              <div style="font-size:0.9rem; opacity:0.8;">${s.email}</div>
+            </div>
+          </label>
+        `;
+      }).join('');
+      updateSelectedCount();
+    }
+
+    function updateSelectedCount() {
+      const count = document.querySelectorAll('#studentsList input:checked').length;
+      document.getElementById('selectedCount').textContent = count + ` selected`;
+    }
+
+    function selectAllStudents() {
+      document.querySelectorAll('#studentsList input').forEach(cb => cb.checked = true);
+      updateSelectedCount();
+    }
+
+    function deselectAllStudents() {
+      document.querySelectorAll('#studentsList input').forEach(cb => cb.checked = false);
+      updateSelectedCount();
+    }
+
+    async function createSessionWithInvite() {
+      const title = document.getElementById('sessionTitle').value.trim();
+      const length = document.getElementById('sessionLength').value || 60;
+      const type = document.getElementById('sessionType').value;
+
+      if (!title) return alert('Please enter session title');
+
+      const selectedIds = Array.from(document.querySelectorAll('#studentsList input:checked')).map(cb => cb.value);
+
+      const btn = event.target;
+      btn.disabled = true;
+      btn.innerHTML = selectedIds.length > 0 ? 'Creating & Inviting...' : 'Creating Session...';
+
+      try {
+        const res = await fetch('http://localhost:8000/api/rooms/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+          body: JSON.stringify({ sessionTitle: title, sessionLength: +length, sessionType: type })
+        });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.message);
+
+        currentRoomId = data.roomId;
+
+        if (selectedIds.length > 0) {
+          await fetch('http://localhost:8000/api/rooms/invite', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+            body: JSON.stringify({ roomId: currentRoomId, invitedUserIds: selectedIds })
+          });
+        }
+
+        document.getElementById('modalCode').textContent = data.roomId;
+        document.getElementById('modalLink').textContent = data.joinLink;
+        document.getElementById('passcodeSection').style.display = data.passcode ? 'block' : 'none';
+        if (data.passcode) document.getElementById('modalPasscode').textContent = data.passcode;
+
+        document.getElementById('sessionModal').style.display = 'flex';
+
+        document.getElementById('joinNowBtn').onclick = () => {
+          location.href = `coding_session.html?role=instructor&session=${currentRoomId}`;
+        };
+
+        alert(`Session created! ${selectedIds.length} students invited.`);
+
+      } catch (err) {
+        alert('Error: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fas fa-paper-plane"></i> Create Session & Send Invites';
+      }
+    }
+
+    function copyToClipboard(id) {
+      const text = document.getElementById(id).textContent;
+      navigator.clipboard.writeText(text);
+      const toast = document.getElementById('toast');
+      toast.style.opacity = 1;
+      setTimeout(() => toast.style.opacity = 0, 2000);
+    }
+
+    function showSection(id) {
+      document.querySelectorAll('.content-section').forEach(s => s.classList.remove('active'));
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelector(`[onclick="showSection('${id}')"]`).classList.add('active');
+
+      if (id === 'create') loadUserAndStudents();
+      if (id === 'sessions') loadMySessions();   // THIS LINE MAKES MY SESSIONS WORK!
+    }
+
+    function logout() {
+      if (confirm('Logout?')) {
+        localStorage.clear();
+        location.href = 'login.html';
+      }
+    }
+
+    window.onclick = e => {
+      if (e.target.id === 'sessionModal') document.getElementById('sessionModal').style.display = 'none';
+    };
+
+    document.getElementById('studentsList')?.addEventListener('change', updateSelectedCount);
+
+    // Initial load
+    showSection('dashboard');
+
+    let joinMethod = 'link';
+
+    function selectJoinMethod(method) {
+      joinMethod = method;
+      document.querySelectorAll('.method-option').forEach(m => m.classList.remove('selected'));
+      event.target.classList.add('selected');
+
+      document.getElementById('linkMethod').style.display = method === 'link' ? 'block' : 'none';
+      document.getElementById('codeMethod').style.display = method === 'code' ? 'block' : 'none';
+      document.getElementById('passcodeInput').style.display = 'none';
+    }
+
+    async function joinSession() {
+      let roomId = '';
+
+      if (joinMethod === 'link') {
+        const link = document.getElementById('joinLink').value.trim();
+        if (!link) return alert('Please enter session link');
+        roomId = link.split('/').pop();
+      } else {
+        roomId = document.getElementById('roomCode').value.trim().toUpperCase();
+        if (!roomId) return alert('Please enter room code');
+      }
+
+      const passcode = document.getElementById('inputPasscode').value.trim();
+
+      try {
+        const checkRes = await fetch(`http://localhost:8000/api/rooms/join-active/${roomId}`, {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (checkRes.ok) {
+          window.location.href = `coding_session.html?role=instructor&session=${roomId}`;
+          return;
+        }
+
+        const joinRes = await fetch('http://localhost:8000/api/rooms/join', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ joinLink: `http://localhost:5500/join/${roomId}`, passcode: passcode || null })
+        });
+
+        const joinData = await joinRes.json();
+
+        if (!joinRes.ok) {
+          if (joinData.message.includes('not invited') || joinData.message.includes('private')) {
+            document.getElementById('passcodeInput').style.display = 'block';
+            return alert('This is a private session! Please enter the passcode.');
+          }
+          throw new Error(joinData.message);
+        }
+
+        alert('Joined session successfully!');
+        window.location.href = `coding_session.html?role=student&session=${roomId}`;
+
+      } catch (err) {
+        alert('Error: ' + err.message);
+      }
+    }
+
+    async function loadMySessions() {
+      try {
+        const res = await fetch('http://localhost:8000/api/rooms/my-sessions', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+
+        if (!res.ok) throw new Error();
+
+        const list = document.getElementById('sessionsList');
+        list.innerHTML = '';
+
+        if (data.activeSessions.length === 0 && data.pastSessions.length === 0) {
+          list.innerHTML = '<p>No sessions found.</p>';
+          return;
+        }
+
+        if (data.activeSessions.length > 0) {
+          list.innerHTML += '<h3 style="color:var(--highlight); margin-top:0;">Active Sessions</h3>';
+          data.activeSessions.forEach(s => {
+            list.innerHTML += `
+              <div style="background:rgba(255,255,255,0.1); padding:1.5rem; margin:1rem 0; border-radius:12px; border-left:5px solid var(--highlight);">
+                <strong style="font-size:1.3rem;">${s.sessionTitle}</strong> <span style="opacity:0.8;">(${s.sessionType})</span><br>
+                Code: <code style="background:#333; padding:0.5rem 1rem; border-radius:8px; font-size:1.2rem;">${s.roomId}</code><br><br>
+                <button onclick="window.location.href='coding_session.html?role=instructor&session=${s.roomId}'" 
+                        style="padding:0.8rem 1.5rem; background:var(--highlight); border:none; color:white; border-radius:10px; font-weight:bold; cursor:pointer;">
+                  Enter Room
+                </button>
+              </div>`;
+          });
+        }
+
+        if (data.pastSessions.length > 0) {
+          list.innerHTML += '<h3 style="color:#888; margin-top:2rem;">Past Sessions</h3>';
+          data.pastSessions.forEach(s => {
+            list.innerHTML += `
+              <div style="opacity:0.6; background:rgba(255,255,255,0.05); padding:1.2rem; margin:1rem 0; border-radius:10px;">
+                <strong>${s.sessionTitle}</strong> (${s.sessionType}) - Ended<br>
+                Code: ${s.roomId}
+              </div>`;
+          });
+        }
+
+      } catch (err) {
+        document.getElementById('sessionsList').innerHTML = '<p style="color:#e94560;">Failed to load sessions</p>';
+      }
+    }
+  </script>
+</body>
+</html>
